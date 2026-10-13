@@ -14,14 +14,14 @@ source "$(dirname "$0")/_common.sh"
 bold "M3 · Insecure Authentication/Authorization"
 info "API: $API_BASE"
 
-bold "1) Fuerza bruta de contraseña (¿hay rate limiting?)"
-for p in 123456 password qwerty password123; do
+bold "1) Fuerza bruta de contraseña (¿hay rate limiting?) — usuario luis@vulnbank.com"
+for p in 123456 password qwerty admin letmein 111111 000000; do
   code=$(curl -s -o /dev/null -w '%{http_code}' --cacert "$CA" -X POST "$API_BASE/login" \
     -H 'Content-Type: application/json' \
-    -d "{\"email\":\"ana@vulnbank.com\",\"password\":\"$p\"}")
-  printf "  intento '%s' → HTTP %s\n" "$p" "$code"
+    -d "{\"email\":\"luis@vulnbank.com\",\"password\":\"$p\"}")
+  printf "  intento '%-9s' → HTTP %s\n" "$p" "$code"
 done
-info "Si no aparece un 429, no hay bloqueo por intentos."
+info "vuln/M3: siempre 401 (sin bloqueo). fix/M3: 429 a partir del 6.º intento."
 
 bold "2) IDOR: leer la cuenta 2001 (de OTRO usuario) con token de Ana"
 TOKEN="$(login_token ana@vulnbank.com password123)"
