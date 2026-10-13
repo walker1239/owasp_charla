@@ -18,12 +18,24 @@ Instala lo que falta:
 ./scripts/setup-tools.sh
 ```
 
-## 2. Arrancar la app + backend
+## 2. Certificados TLS de desarrollo
+
+El backend habla **HTTPS** con una CA propia; la app la **fija** (pinning).
+Genera los certificados una sola vez:
 
 ```bash
-# Terminal 1 — backend inseguro
+./scripts/gen-certs.sh
+```
+
+Esto crea `backend/certs/{ca,server}.crt|key` y copia la CA al asset
+`vuln_bank/assets/certs/ca.crt`. Volver a ejecutarlo regenera todo.
+
+## 3. Arrancar backend + app
+
+```bash
+# Terminal 1 — backend HTTPS en https://localhost:8443
 cd backend
-dart run bin/server.dart            # escucha en http://localhost:8080
+dart run bin/server.dart
 
 # Terminal 2 — emulador Android
 flutter emulators --launch Pixel_6
@@ -33,61 +45,60 @@ cd vuln_bank
 flutter run
 ```
 
-> Desde el emulador Android, `localhost` es el propio emulador. Para que la app
-> alcance el backend del Mac usamos `adb reverse`:
->
-> ```bash
-> adb reverse tcp:8080 tcp:8080
-> ```
-> Así `http://localhost:8080` en el dispositivo apunta al backend del host.
+La app usa `https://10.0.2.2:8443` en Android (el `10.0.2.2` es el Mac visto
+desde el emulador) y `https://localhost:8443` en iOS. Puedes forzar otra URL:
 
-## 3. Preparar el entorno de interceptación (M5)
+```bash
+flutter run --dart-define=API_BASE_URL=https://mi-host:8443
+```
+
+> Alternativa para dispositivo físico Android: `adb reverse tcp:8443 tcp:8443`
+> y usa `--dart-define=API_BASE_URL=https://localhost:8443`.
+
+## 4. Interceptación (M5 — Insecure Communication)
+
+En el baseline la app **fija** el certificado del backend: aunque pongas un
+proxy, la conexión falla porque el certificado de mitmproxy no es el esperado.
+Esa es precisamente la defensa que la rama `vuln/M5` desactiva.
+
+Para preparar el ataque:
 
 ```bash
 mitmproxy -p 8081
 ```
 
-Luego, en el emulador Android, apuntar el tráfico por el proxy:
+- **Android**: arranca el emulador apuntando al proxy
+  ```bash
+  emulator -avd Pixel_6 -http-proxy http://10.0.2.2:8081
+  ```
+  e instala la CA de mitmproxy como CA de usuario
+  (exporta `~/.mitmproxy/mitmproxy-ca-cert.cer`, súbela con `adb push` a
+  `/sdcard/Download/` e instálala desde *Ajustes → Seguridad*).
+- **iOS (simulador)**: *Ajustes → Wi-Fi → (i) → Proxy → Manual* → `127.0.0.1:8081`.
 
-```bash
-# Arrancar el emulador con proxy (o usar el menú de red de Android Studio)
-emulator -avd Pixel_6 -http-proxy http://10.0.2.2:8081
-```
+Con `vuln/M5` activo verás el tráfico en claro; con `main` (baseline) la
+conexión se rechaza. Esa diferencia es la lección.
 
-Instalar el certificado de mitmproxy como CA de usuario:
+## 5. iOS
 
-```bash
-# Genera el .cer desde mitm.it en el navegador del emulador, o
-# exporta el cert y súbelo:
-adb push ~/.mitmproxy/mitmproxy-ca-cert.cer /sdcard/Download/
-# Ajustes → Seguridad → Cifrado y credenciales → Instalar certificado → CA
-```
-
-> En Android 7+ las apps **solo confían en CAs de sistema** salvo que declaren lo
-> contrario. En VulnBank lo habilitamos a propósito en las ramas `vuln/M5`.
-> Instalar la CA a nivel de sistema requiere dispositivo rooteado o un
-> `networkSecurityConfig` de usuario.
-
-## 4. iOS (simulador)
-
-- Ejecuta `flutter run` con el simulador abierto.
-- Para interceptar, configura el proxy manualmente en
-  *Ajustes → Wi-Fi → (i) → Proxy → Manual* apuntando a `127.0.0.1:8081`.
+- `flutter run` con el simulador abierto.
+- `dart:io` valida el certificado con la CA fijada (el pinning es de la app,
+  no depende de ATS). Por eso el baseline también falla ante mitmproxy.
 - `frida`/`objection` en simulador es limitado; el análisis dinámico completo
-  requiere un dispositivo con jailbreak. Lo documentaremos en cada guía.
+  requiere jailbreak. Se documenta en cada guía.
 
-## 5. Estructura del repo
+## 6. Estructura del repo
 
 ```
 owasp/
 ├── vuln_bank/   # App Flutter
-├── backend/     # API Dart/shelf insegura
+├── backend/     # API Dart/shelf insegura (HTTPS dev)
 ├── docs/        # Guías por vulnerabilidad
-├── scripts/     # Exploits + setup
+├── scripts/     # Exploits + setup + gen-certs
 └── README.md
 ```
 
-## 6. Ramas
+## 7. Ramas
 
 - `main` → baseline **seguro**.
 - `vuln/Mx` → introduce la vulnerabilidad Mx.

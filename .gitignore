@@ -18,6 +18,10 @@ backend/build/
 *.db
 *.sqlite
 
+# Certificados de desarrollo (generados con scripts/gen-certs.sh)
+backend/certs/
+vuln_bank/assets/certs/
+
 # APKs / artefactos de análisis
 *.apk
 *.aab

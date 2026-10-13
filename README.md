@@ -19,8 +19,9 @@ Top 10 (2024) uno por uno: **identificar → explotar → remediar**.
 
 ```bash
 ./scripts/setup-tools.sh        # instala jadx/apktool/frida/objection/mitmproxy
+./scripts/gen-certs.sh          # CA + cert del servidor (TLS del backend)
 
-# Backend
+# Backend (HTTPS en https://localhost:8443)
 cd backend && dart run bin/server.dart
 
 # App (en otra terminal)
