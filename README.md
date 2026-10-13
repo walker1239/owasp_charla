@@ -32,18 +32,18 @@ Detalles en [`docs/00-setup-entorno.md`](docs/00-setup-entorno.md).
 
 ## Top 10 (2024) y dónde vive cada fallo
 
-| ID | Vulnerabilidad | Feature | Guía |
-|----|----------------|---------|------|
-| M1 | Improper Credential Usage | `lib/config/secrets.dart` | docs/01-M1-* |
-| M2 | Inadequate Supply Chain Security | `vuln_bank/pubspec.yaml` | docs/02-M2-* |
-| M3 | Insecure Authentication/Authorization | login + cuentas | docs/03-M3-* |
-| M4 | Insufficient Input/Output Validation | búsqueda + deep link | docs/04-M4-* |
-| M5 | Insecure Communication | capa HTTP + manifiestos | docs/05-M5-* |
-| M6 | Inadequate Privacy Controls | perfil + logs | docs/06-M6-* |
-| M7 | Insufficient Binary Protections | build release | docs/07-M7-* |
-| M8 | Security Misconfiguration | AndroidManifest / Info.plist | docs/08-M8-* |
-| M9 | Insecure Data Storage | SharedPreferences / SQLite | docs/09-M9-* |
-| M10 | Insufficient Cryptography | `lib/core/crypto.dart` | docs/10-M10-* |
+| ID | Vulnerabilidad | Feature | Guía | Script |
+|----|----------------|---------|------|--------|
+| M1 | Improper Credential Usage | `lib/config/secrets.dart` | [01](docs/01-M1-improper-credential-usage.md) | `scripts/M1-extract-secrets.sh` |
+| M2 | Inadequate Supply Chain Security | `vuln_bank/pubspec.yaml` | [02](docs/02-M2-supply-chain.md) | `scripts/M2-supply-chain-audit.sh` |
+| M3 | Insecure Authentication/Authorization | login + cuentas | [03](docs/03-M3-auth.md) | `scripts/M3-bruteforce-idor.sh` |
+| M4 | Insufficient Input/Output Validation | búsqueda + backend | [04](docs/04-M4-input-validation.md) | `scripts/M4-input-sqli.sh` |
+| M5 | Insecure Communication | HTTP + manifiestos | [05](docs/05-M5-insecure-communication.md) | `scripts/M5-mitm-setup.sh` |
+| M6 | Inadequate Privacy Controls | perfil + logs | [06](docs/06-M6-privacy.md) | `scripts/M6-privacy-leak.sh` |
+| M7 | Insufficient Binary Protections | build release | [07](docs/07-M7-binary-protections.md) | `scripts/M7-binary-repack.sh` |
+| M8 | Security Misconfiguration | AndroidManifest / Info.plist | [08](docs/08-M8-misconfiguration.md) | `scripts/M8-misconfig.sh` |
+| M9 | Insecure Data Storage | SharedPreferences / SQLite | [09](docs/09-M9-data-storage.md) | `scripts/M9-storage-dump.sh` |
+| M10 | Insufficient Cryptography | `lib/core/crypto.dart` | [10](docs/10-M10-cryptography.md) | `scripts/M10-crypto.sh` |
 
 ## Ramas
 
@@ -66,7 +66,7 @@ git diff vuln/M3 fix/M3             # la lección de remediación
 ## Estado
 
 - [x] Fase 0 — Setup
-- [ ] Fase 1 — Esqueleto funcional seguro
+- [x] Fase 1 — Esqueleto funcional seguro
 - [ ] Fase 2 — Ramas `vuln/M1..M10`
-- [ ] Fase 3 — Scripts + documentos
+- [x] Fase 3 — Scripts + documentos
 - [ ] Fase 4 — Ramas `fix/M1..M10`
