@@ -16,11 +16,6 @@ import 'package:backend/security.dart';
 final db = Db.seed();
 final auth = Auth();
 
-/// Rate limiting de login (defensa que M3 elimina).
-final Map<String, List<DateTime>> _loginAttempts = {};
-const _maxAttempts = 5;
-const _windowSeconds = 60;
-
 final _router = Router()
   ..get('/', _root)
   ..post('/login', _login)
@@ -102,22 +97,11 @@ Future<Response> _login(Request req) async {
   final email = data['email'] as String? ?? '';
   final password = data['password'] as String? ?? '';
 
-  // [baseline] Rate limiting por email.
-  final now = DateTime.now();
-  final attempts = (_loginAttempts[email] ?? [])
-      .where((t) => now.difference(t).inSeconds < _windowSeconds)
-      .toList();
-  if (attempts.length >= _maxAttempts) {
-    return _json({'error': 'demasiados intentos, espera un momento'}, status: 429);
-  }
-
+  // [M3] VULNERABLE: sin rate limiting ni bloqueo de cuenta (fuerza bruta libre).
   if (!db.verifyPassword(email, password)) {
-    attempts.add(now);
-    _loginAttempts[email] = attempts;
     return _json({'error': 'credenciales inválidas'}, status: 401);
   }
 
-  _loginAttempts.remove(email);
   final rows = db.raw.select('SELECT id, name FROM users WHERE email = ?', [email]);
   final user = rows.first;
   final token = auth.issueToken(
@@ -169,10 +153,7 @@ Response _accountById(Request req, String id) {
   );
   if (rows.isEmpty) return _json({'error': 'no encontrado'}, status: 404);
 
-  // [baseline] Authorization en el SERVIDOR: solo el dueño puede verla.
-  if (rows.first['user_id'] != userId) {
-    return _json({'error': 'prohibido'}, status: 403);
-  }
+  // [M3] VULNERABLE (IDOR): no se comprueba que la cuenta sea del usuario.
   return _json(_accountToMap(rows.first));
 }
 
@@ -185,9 +166,7 @@ Response _transactions(Request req, String id) {
     [int.tryParse(id) ?? -1],
   );
   if (owner.isEmpty) return _json({'error': 'no encontrado'}, status: 404);
-  if (owner.first['user_id'] != userId) {
-    return _json({'error': 'prohibido'}, status: 403);
-  }
+  // [M3] VULNERABLE (IDOR): se listan movimientos de cuentas ajenas.
 
   final rows = db.raw.select(
     'SELECT id, concept, amount, created_at FROM transactions WHERE account_id = ?',
@@ -248,10 +227,7 @@ Future<Response> _transfer(Request req) async {
     [fromId],
   );
   if (origin.isEmpty) return _json({'error': 'cuenta origen no existe'}, status: 404);
-  // [baseline] Solo puedes transferir DESDE tus propias cuentas.
-  if (origin.first['user_id'] != userId) {
-    return _json({'error': 'prohibido'}, status: 403);
-  }
+  // [M3] VULNERABLE (IDOR): puedes transferir desde CUALQUIER cuenta.
   final balance = origin.first['balance'] as double;
   if (balance < amount) return _json({'error': 'saldo insuficiente'}, status: 400);
 
