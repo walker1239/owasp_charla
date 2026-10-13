@@ -211,12 +211,11 @@ Response _searchBeneficiaries(Request req) {
   if (userId == null) return _json({'error': 'no autorizado'}, status: 401);
 
   final q = req.url.queryParameters['q'] ?? '';
-  // [baseline] Consulta PARAMETRIZADA (inmune a SQLi).
-  final rows = db.raw.select(
-    'SELECT id, alias, account_number, bank FROM beneficiaries '
-    'WHERE user_id = ? AND alias LIKE ?',
-    [userId, '%$q%'],
-  );
+  // [M4] VULNERABLE: la consulta se construye concatenando la entrada del
+  // usuario → inyección SQL. No hay validación ni parametrización.
+  final sql = 'SELECT id, alias, account_number, bank FROM beneficiaries '
+      "WHERE user_id = $userId AND alias LIKE '%$q%'";
+  final rows = db.raw.select(sql);
   return _json({
     'results': [
       for (final r in rows)
