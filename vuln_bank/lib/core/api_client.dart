@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
 
@@ -32,10 +33,12 @@ class ApiClient {
   final http.Client _client;
 
   static Future<ApiClient> create() async {
-    // [M5] VULNERABLE: se acepta CUALQUIER certificado (sin pinning).
-    // Un proxy MITM (mitmproxy) puede interceptar el tráfico.
-    final httpClient = HttpClient()
-      ..badCertificateCallback = (cert, host, port) => true;
+    final caBytes = (await rootBundle.load('assets/certs/ca.crt'))
+        .buffer
+        .asUint8List();
+    final context = SecurityContext(withTrustedRoots: false)
+      ..setTrustedCertificatesBytes(caBytes);
+    final httpClient = HttpClient(context: context);
     return ApiClient._(IOClient(httpClient));
   }
 
