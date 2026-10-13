@@ -42,8 +42,7 @@ class AppState extends ChangeNotifier {
     _token = result.token;
     _user = result.user;
     await SecureStore.saveToken(result.token);
-    // [M6] VULNERABLE: credenciales y token quedan en el logcat.
-    Log.credentials(email, password, result.token);
+    Log.event('login', sensitive: {'email': email});
     notifyListeners();
   }
 
