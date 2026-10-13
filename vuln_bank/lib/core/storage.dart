@@ -1,64 +1,24 @@
-import 'package:path/path.dart' as p;
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sqflite/sqflite.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-/// Almacenamiento local.
+/// Almacenamiento del baseline — SEGURO.
 ///
-/// [M9] VULNERABLE — guarda datos sensibles SIN cifrar:
-///   - `SharedPreferences`: token, email y contraseña en claro.
-///   - SQLite (`vulnbank.db`): datos de tarjetas en claro.
+/// Usa el almacén protegido por el sistema (Android Keystore / iOS Keychain)
+/// en lugar de preferencias en claro.
 ///
-/// Extraíble con `adb shell run-as <pkg> cat ...`
-/// (ver `./scripts/M9-storage-dump.sh`).
+/// La rama `vuln/M9` cambiará esto por `SharedPreferences` y SQLite sin cifrar.
 class SecureStore {
   SecureStore._();
 
+  static const _storage = FlutterSecureStorage(
+    iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
+  );
+
   static const _tokenKey = 'auth_token';
 
-  static Future<void> saveToken(String token) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_tokenKey, token); // [M9] texto plano
-  }
+  static Future<void> saveToken(String token) =>
+      _storage.write(key: _tokenKey, value: token);
 
-  static Future<void> saveCredentials(String email, String password) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('user_email', email); // [M9] PII en claro
-    await prefs.setString('user_password', password); // [M9] ¡contraseña en claro!
-  }
+  static Future<String?> readToken() => _storage.read(key: _tokenKey);
 
-  static Future<String?> readToken() async =>
-      (await SharedPreferences.getInstance()).getString(_tokenKey);
-
-  static Future<void> clear() async =>
-      (await SharedPreferences.getInstance()).clear();
-}
-
-/// [M9] Base de datos SQLite local SIN cifrar, con datos de tarjetas.
-class LocalDb {
-  LocalDb._();
-
-  static Future<void> storeCard({
-    required String number,
-    required String holder,
-    required String cvv,
-  }) async {
-    final path = p.join(await getDatabasesPath(), 'vulnbank.db');
-    final db = await openDatabase(
-      path,
-      version: 1,
-      onCreate: (db, _) async {
-        await db.execute(
-          'CREATE TABLE cards ('
-          'id INTEGER PRIMARY KEY AUTOINCREMENT, '
-          'number TEXT, holder TEXT, cvv TEXT)',
-        );
-      },
-    );
-    await db.insert('cards', {
-      'number': number,
-      'holder': holder,
-      'cvv': cvv,
-    });
-    await db.close();
-  }
+  static Future<void> clear() => _storage.deleteAll();
 }
