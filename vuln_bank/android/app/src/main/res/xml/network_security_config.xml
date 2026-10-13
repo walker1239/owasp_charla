@@ -1,17 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Baseline SEGURO (main):
-    - Prohíbe el tráfico en claro (cleartext HTTP).
-    - Confía SOLO en las CAs del sistema, NO en CAs instaladas por el usuario
-      (las que usa un proxy de interceptación como mitmproxy).
-
-  La rama `vuln/M5` relajará esto a propósito
-  (cleartextTrafficPermitted="true" + <certificates src="user"/>).
+  [M5] VULNERABLE:
+    - Permite tráfico en claro (HTTP).
+    - Confía en CAs instaladas por el usuario (las de mitmproxy).
 -->
 <network-security-config>
-    <base-config cleartextTrafficPermitted="false">
+    <base-config cleartextTrafficPermitted="true">
         <trust-anchors>
             <certificates src="system"/>
+            <certificates src="user"/>
         </trust-anchors>
     </base-config>
 </network-security-config>
