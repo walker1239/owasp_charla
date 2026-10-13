@@ -29,8 +29,7 @@ final _router = Router()
   ..get('/accounts/<id>', _accountById)
   ..get('/accounts/<id>/transactions', _transactions)
   ..get('/beneficiaries/search', _searchBeneficiaries)
-  ..post('/transfer', _transfer)
-  ..get('/admin/users', _adminUsers);
+  ..post('/transfer', _transfer);
 
 void main(List<String> args) async {
   final handler = Pipeline()
@@ -272,19 +271,3 @@ Map<String, dynamic> _accountToMap(Row r) => {
       'balance': r['balance'],
       'currency': r['currency'],
     };
-
-/// [M1] Endpoint de administración protegido por una API key hardcodeada
-/// (la misma que viaja embebida en el APK de la app).
-Response _adminUsers(Request req) {
-  const key = 'sk_live_VLNBANK_9f8e7d6c5b4a3210';
-  if (req.headers['x-api-key'] != key) {
-    return _json({'error': 'api key inválida'}, status: 401);
-  }
-  final rows = db.raw.select('SELECT id, email, name, role FROM users');
-  return _json({
-    'users': [
-      for (final r in rows)
-        {'id': r['id'], 'email': r['email'], 'name': r['name'], 'role': r['role']}
-    ]
-  });
-}
