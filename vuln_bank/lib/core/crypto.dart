@@ -5,39 +5,43 @@ import 'dart:typed_data';
 import 'package:crypto/crypto.dart' as c;
 import 'package:pointycastle/export.dart';
 
-/// Criptografía del baseline — implementaciones SEGURAS.
+/// Criptografía de la app.
 ///
-/// - Hash de integridad: SHA-256 (no MD5/SHA-1).
-/// - Cifrado: AES-256-GCM (autenticado, IV aleatorio por operación).
-/// - Aleatoriedad: `Random.secure()`.
+/// [M10] VULNERABLE — implementaciones débiles:
+///   - MD5 en lugar de SHA-256.
+///   - AES-ECB con clave hardcodeada (sin IV, determinista).
+///   - `Random()` en lugar de `Random.secure()`.
 ///
-/// La rama `vuln/M10` degradará esto a MD5, AES-ECB con IV fijo y clave
-/// hardcodeada, además de `Random()` no seguro.
+/// Ver `./scripts/M10-crypto.sh`.
 class Crypto {
   Crypto._();
 
+  /// [M10] Clave simétrica embebida en el binario (extraíble del APK).
+  static const String hardcodedKey = '0123456789abcdef';
+
   static Uint8List randomBytes(int length) {
-    final rnd = Random.secure();
+    // [M10] VULNERABLE: `Random()` no es criptográficamente seguro.
+    final rnd = Random();
     return Uint8List.fromList(List<int>.generate(length, (_) => rnd.nextInt(256)));
   }
 
+  /// [M10] VULNERABLE: MD5 (colisiones conocidas, sin salt).
   static String sha256Hex(String input) =>
-      c.sha256.convert(utf8.encode(input)).toString();
+      c.md5.convert(utf8.encode(input)).toString();
 
-  /// Cifra con AES-256-GCM. Devuelve `iv || ciphertext(mac)`.
+  /// Hash mostrado en la UI (integridad del perfil).
+  static String hashForIntegrity(String input) => sha256Hex(input);
+
+  /// [M10] VULNERABLE: AES-ECB con clave hardcodeada (sin IV).
   static Uint8List aesGcmEncrypt(Uint8List key, Uint8List plain) {
-    final iv = randomBytes(12);
-    final cipher = GCMBlockCipher(AESEngine())
-      ..init(true, AEADParameters(KeyParameter(key), 128, iv, Uint8List(0)));
-    final out = cipher.process(plain);
-    return Uint8List.fromList([...iv, ...out]);
+    final cipher = ECBBlockCipher(AESEngine())
+      ..init(true, KeyParameter(Uint8List.fromList(utf8.encode(hardcodedKey))));
+    return cipher.process(plain);
   }
 
   static Uint8List aesGcmDecrypt(Uint8List key, Uint8List data) {
-    final iv = data.sublist(0, 12);
-    final body = data.sublist(12);
-    final cipher = GCMBlockCipher(AESEngine())
-      ..init(false, AEADParameters(KeyParameter(key), 128, iv, Uint8List(0)));
-    return cipher.process(body);
+    final cipher = ECBBlockCipher(AESEngine())
+      ..init(false, KeyParameter(Uint8List.fromList(utf8.encode(hardcodedKey))));
+    return cipher.process(data);
   }
 }
