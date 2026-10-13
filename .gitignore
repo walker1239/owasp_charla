@@ -22,9 +22,6 @@ backend/build/
 backend/certs/
 vuln_bank/assets/certs/
 
-# [M2] VULNERABLE: lockfile no versionado -> builds no reproducibles
-vuln_bank/pubspec.lock
-
 # APKs / artefactos de análisis
 *.apk
 *.aab
