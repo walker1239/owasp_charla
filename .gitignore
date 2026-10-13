@@ -1,0 +1,25 @@
+# macOS
+.DS_Store
+
+# editores
+.idea/
+.vscode/
+*.iml
+
+# Dart / Flutter
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Backend
+backend/build/
+*.db
+*.sqlite
+
+# APKs / artefactos de análisis
+*.apk
+*.aab
+*.ipa
+*.apk.out/
