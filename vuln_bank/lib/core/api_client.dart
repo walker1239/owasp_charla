@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
 
 import '../config/app_config.dart';
+import '../config/secrets.dart';
 import '../models/account.dart';
 import '../models/beneficiary.dart';
 import '../models/user.dart';
@@ -46,6 +47,8 @@ class ApiClient {
 
   Map<String, String> _headers(String? token) => {
         'Content-Type': 'application/json',
+        // [M1] La API key va embebida en el binario y se envía en cada petición.
+        'X-API-Key': Secrets.billingApiKey,
         if (token != null) 'Authorization': 'Bearer $token',
       };
 
