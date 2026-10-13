@@ -34,14 +34,16 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
-  http: ^1.6.0
+  # [M2] VULNERABLE: dependencias sin versión fija (supply chain).
+  # 'any' acepta cualquier versión publicada, incluida una comprometida.
+  http: any
   shared_preferences: ^2.5.5
   sqflite: ^2.4.2+1
   path: ^1.9.1
   path_provider: ^2.1.6
-  crypto: ^3.0.7
+  crypto: any
   pointycastle: ^4.0.0
-  webview_flutter: ^4.14.1
+  webview_flutter: any
   provider: ^6.1.5+1
   flutter_secure_storage: ^11.2.0
 
