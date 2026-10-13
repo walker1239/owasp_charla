@@ -67,6 +67,9 @@ git diff vuln/M3 fix/M3             # la lección de remediación
 
 - [x] Fase 0 — Setup
 - [x] Fase 1 — Esqueleto funcional seguro
-- [ ] Fase 2 — Ramas `vuln/M1..M10`
+- [x] Fase 2 — Ramas `vuln/M1..M10`
 - [x] Fase 3 — Scripts + documentos
-- [ ] Fase 4 — Ramas `fix/M1..M10`
+- [x] Fase 4 — Ramas `fix/M1..M10`
+
+Todas las ramas existen: `vuln/M1..M10` y `fix/M1..M10`. Validadas en vivo:
+M3 (IDOR/JWT/rate-limit) y M4 (SQLi) se bloquean en su `fix`.
