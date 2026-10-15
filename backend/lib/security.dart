@@ -15,8 +15,9 @@ class Auth {
   final String _secret;
 
   String issueToken({required int userId, required String email}) {
-    final jwt = JWT({'sub': userId, 'email': email});
-    return jwt.sign(SecretKey(_secret), expiresIn: const Duration(hours: 1));
+    // [fix/M3] Tokens de vida corta + emisor, además de verificar la firma.
+    final jwt = JWT({'sub': userId, 'email': email, 'iss': 'vulnbank'});
+    return jwt.sign(SecretKey(_secret), expiresIn: const Duration(minutes: 15));
   }
 
   /// Devuelve el payload si el token es válido, o `null` si no lo es.
