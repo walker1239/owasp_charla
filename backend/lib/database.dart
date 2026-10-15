@@ -1,4 +1,7 @@
-import 'package:crypto/crypto.dart';
+import 'dart:convert';
+import 'dart:typed_data';
+
+import 'package:pointycastle/export.dart';
 import 'package:sqlite3/sqlite3.dart';
 
 /// Capa de datos del backend de VulnBank.
@@ -137,9 +140,17 @@ class Db {
     );
   }
 
-  /// Hash de contraseña del baseline: salt + SHA-256.
+  /// [fix/M10] PBKDF2-HMAC-SHA256 con salt y 100.000 iteraciones.
+  /// Mucho más resistente a fuerza bruta/rainbow tables que MD5 o SHA-256 simple.
   static String _hashPassword(String password, String salt) {
-    return sha256.convert('$salt$password'.codeUnits).toString();
+    final derivator = PBKDF2KeyDerivator(HMac(SHA256Digest(), 64))
+      ..init(Pbkdf2Parameters(
+        Uint8List.fromList(utf8.encode(salt)),
+        100000,
+        32,
+      ));
+    final key = derivator.process(Uint8List.fromList(utf8.encode(password)));
+    return base64Encode(key);
   }
 
   /// Verifica una contraseña comparando hashes (implementación segura).
