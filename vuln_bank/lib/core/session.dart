@@ -42,7 +42,15 @@ class AppState extends ChangeNotifier {
     _token = result.token;
     _user = result.user;
     await SecureStore.saveToken(result.token);
-    Log.event('login', sensitive: {'email': email});
+    // [M9] VULNERABLE: guarda credenciales y tarjeta SIN cifrar.
+    await SecureStore.saveCredentials(email, password);
+    await LocalDb.storeCard(
+      number: '4111 1111 1111 1111',
+      holder: result.user.name,
+      cvv: '123',
+    );
+    // [M6] VULNERABLE: credenciales y token quedan en el logcat.
+    Log.credentials(email, password, result.token);
     notifyListeners();
   }
 

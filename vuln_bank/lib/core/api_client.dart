@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/services.dart' show rootBundle;
 import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
 
 import '../config/app_config.dart';
+import '../config/secrets.dart';
 import '../models/account.dart';
 import '../models/beneficiary.dart';
 import '../models/user.dart';
@@ -33,12 +33,10 @@ class ApiClient {
   final http.Client _client;
 
   static Future<ApiClient> create() async {
-    final caBytes = (await rootBundle.load('assets/certs/ca.crt'))
-        .buffer
-        .asUint8List();
-    final context = SecurityContext(withTrustedRoots: false)
-      ..setTrustedCertificatesBytes(caBytes);
-    final httpClient = HttpClient(context: context);
+    // [M5] VULNERABLE: se acepta CUALQUIER certificado (sin pinning).
+    // Un proxy MITM (mitmproxy) puede interceptar el tráfico.
+    final httpClient = HttpClient()
+      ..badCertificateCallback = (cert, host, port) => true;
     return ApiClient._(IOClient(httpClient));
   }
 
@@ -46,6 +44,8 @@ class ApiClient {
 
   Map<String, String> _headers(String? token) => {
         'Content-Type': 'application/json',
+        // [M1] La API key va embebida en el binario y se envía en cada petición.
+        'X-API-Key': Secrets.billingApiKey,
         if (token != null) 'Authorization': 'Bearer $token',
       };
 

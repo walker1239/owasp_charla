@@ -35,6 +35,11 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
+            // [M7] VULNERABLE: release sin ofuscación ni reducción de código.
+            isMinifyEnabled = false
+            isShrinkResources = false
+            // Nota: el build tampoco usa `flutter build --obfuscate --split-debug-info`,
+            // así que los nombres de clases y métodos quedan legibles.
         }
     }
 }

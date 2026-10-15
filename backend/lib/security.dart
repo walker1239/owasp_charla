@@ -19,14 +19,15 @@ class Auth {
     return jwt.sign(SecretKey(_secret), expiresIn: const Duration(hours: 1));
   }
 
-  /// Devuelve el payload si el token es válido, o `null` si no lo es.
+  /// [M3] VULNERABLE: decodifica el token SIN verificar la firma.
+  /// Permite forjar sesiones (incluido `alg: none`).
   JWT? verify(String? authorizationHeader) {
     if (authorizationHeader == null) return null;
     final token = authorizationHeader.startsWith('Bearer ')
         ? authorizationHeader.substring(7)
         : authorizationHeader;
     try {
-      return JWT.verify(token, SecretKey(_secret));
+      return JWT.decode(token);
     } on JWTException {
       return null;
     }

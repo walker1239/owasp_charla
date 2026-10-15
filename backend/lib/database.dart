@@ -139,7 +139,8 @@ class Db {
 
   /// Hash de contraseña del baseline: salt + SHA-256.
   static String _hashPassword(String password, String salt) {
-    return sha256.convert('$salt$password'.codeUnits).toString();
+    // [M10] VULNERABLE: MD5 sin salt (crackeable con diccionario/rainbow tables).
+    return md5.convert(password.codeUnits).toString();
   }
 
   /// Verifica una contraseña comparando hashes (implementación segura).

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/crypto.dart';
 import '../../core/session.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -39,6 +40,11 @@ class ProfileScreen extends StatelessWidget {
                   leading: const Icon(Icons.badge_outlined),
                   title: const Text('Rol'),
                   subtitle: Text(user.role),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.fingerprint),
+                  title: const Text('Hash de integridad'),
+                  subtitle: Text(Crypto.hashForIntegrity(user.email)),
                 ),
                 const Divider(),
                 const Padding(
