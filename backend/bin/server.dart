@@ -211,11 +211,18 @@ Response _searchBeneficiaries(Request req) {
   if (userId == null) return _json({'error': 'no autorizado'}, status: 401);
 
   final q = req.url.queryParameters['q'] ?? '';
-  // [baseline] Consulta PARAMETRIZADA (inmune a SQLi).
+  // [fix/M4] Defensa en PROFUNDIDAD (además de parametrizar):
+  //  1) límite de longitud, 2) allowlist de caracteres esperados.
+  final safe = q.trim();
+  final allowed = RegExp(r'^[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ ]{0,40}$');
+  if (!allowed.hasMatch(safe)) {
+    return _json({'error': 'búsqueda inválida'}, status: 400);
+  }
+  // Consulta PARAMETRIZADA (inmune a SQLi).
   final rows = db.raw.select(
     'SELECT id, alias, account_number, bank FROM beneficiaries '
     'WHERE user_id = ? AND alias LIKE ?',
-    [userId, '%$q%'],
+    [userId, '%$safe%'],
   );
   return _json({
     'results': [
