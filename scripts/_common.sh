@@ -33,3 +33,34 @@ require_apk() {
   fi
   echo "$apk"
 }
+
+# Resuelve el APK a analizar.
+#   resolve_apk            -> release si existe, si no debug
+#   resolve_apk release    -> app-release.apk
+#   resolve_apk debug      -> app-debug.apk
+#   resolve_apk /ruta.apk  -> esa ruta
+resolve_apk() {
+  local sel="${1:-auto}"
+  case "$sel" in
+    ""|auto)
+      if [ -f "$APK_RELEASE" ]; then echo "$APK_RELEASE"
+      elif [ -f "$APK_DEBUG" ]; then echo "$APK_DEBUG"
+      else echo ""; fi
+      ;;
+    release) echo "$APK_RELEASE" ;;
+    debug)   echo "$APK_DEBUG" ;;
+    *)       echo "$sel" ;;
+  esac
+}
+
+# Imprime "debug" o "release" según los artefactos dentro del APK desempaquetado.
+apk_kind() {
+  local work="$1"
+  if [ -f "$work/assets/flutter_assets/kernel_blob.bin" ]; then
+    echo "debug"
+  elif ls "$work"/lib/*/libapp.so >/dev/null 2>&1; then
+    echo "release"
+  else
+    echo "desconocido"
+  fi
+}
