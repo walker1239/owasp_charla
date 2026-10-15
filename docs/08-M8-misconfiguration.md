@@ -19,6 +19,35 @@ cd .. && ./scripts/M8-misconfig.sh
 El script lee el manifiesto con `aapt2`, consulta los flags efectivos en el
 dispositivo (`dumpsys package`) e intenta `adb backup` para extraer datos.
 
+## ⚙️ Nota de build (importante para la demo)
+`vuln/M8` (y `vuln/all`) incluyen `android:debuggable="true"`, que Android
+**rechaza en release** por lint:
+
+```
+AndroidManifest.xml: Error: Avoid hardcoding the debug mode … [HardcodedDebugMode]
+> Lint found fatal errors while assembling a release target.
+```
+
+Es intencional: forma parte de la mala configuración (una app *debuggable* en
+producción). Por eso, para la demo de M8 usa **debug** — y al exponer M8 deja
+`android:debuggable="true"` en el manifiesto para mostrar el fallo:
+
+```bash
+git checkout vuln/M8
+cd vuln_bank && flutter build apk --debug && cd ..
+./scripts/M8-misconfig.sh
+```
+
+Si puntualmente necesitas un **release** en `vuln/all`, añade en
+`android/app/build.gradle.kts`:
+
+```kotlin
+lint {
+    checkReleaseBuilds = false
+    abortOnError = false
+}
+```
+
 ## Impacto
 Extracción de datos por backup, componentes expuestos y apps debuggables.
 
